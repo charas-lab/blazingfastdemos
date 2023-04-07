@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Page Source Code Importer</title>
+  </head>
+  <body>
+    <form>
+      <label for="url">Enter URL:</label>
+      <input type="text" id="url" name="url" />
+      <button type="submit">Import</button>
+    </form>
+
+    <script>
+      const form = document.querySelector("form");
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const url = form.url.value;
+
+        try {
+          const response = await fetch(`https://api.codetabs.com/v1/proxy/?quest=${url}`);
+          const data = await response.text();
+
+          const gistUrl = await createGist(url, data);
+          const sandboxUrl = `https://codesandbox.io/s/${gistUrl.split('/').pop()}`;
+
+          window.location.href = sandboxUrl;
+        } catch (error) {
+          console.error(error);
+        }
+      });
+
+      async function createGist(url, content) {
+        const response = await fetch("https://your-vercel-app-url.vercel.app/api/create-gist", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ url, content }),
+        });
+
+        if (response.ok) {
+          const responseData = await response.json();
+          return responseData.gistUrl;
+        } else {
+          const errorData = await response.json();
+          throw new Error(errorData.error);
+        }
+      }
+    </script>
+  </body>
+</html>
